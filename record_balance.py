@@ -1,7 +1,6 @@
 from binance.client import Client
 from credentials import API_KEY, API_SECRET
 from openpyxl import load_workbook
-import re
 from datetime import date
 
 client = Client(API_KEY, API_SECRET)
@@ -10,7 +9,7 @@ wb = load_workbook('Trade Record.xlsx')
 sheet = wb["Balance Record"]
 for cell in sheet["A"]:
     if cell.value == None:
-        row_num = int(re.findall(r"\d+", str(cell))[0])
+        row_num = int(str(cell).split(".")[1][1:-1])
         row_num_above = str(row_num - 1)
         row_num = str(row_num)
         sheet["A" + row_num] = current_date
