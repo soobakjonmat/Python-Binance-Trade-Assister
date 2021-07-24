@@ -1,5 +1,5 @@
 from binance.client import Client
-from time import sleep, time
+from time import sleep
 import tkinter
 from threading import Thread
 from credentials import API_KEY, API_SECRET
@@ -104,17 +104,11 @@ class Trade():
         command = self.command_entry.get()
         self.command_entry.delete(0, "end")
         if command == "b":
-            start_time = time()
             self.enter_long()
-            get_time(start_time, 5)
         elif command == "s":
-            start_time = time()
             self.enter_short()
-            get_time(start_time, 5)
         elif command == "cl":
-            start_time = time()
             self.close_position()
-            get_time(start_time, 5)
         elif command == "cc":
             self.cancel_order()
         elif " " in command:
@@ -139,7 +133,6 @@ class Trade():
                 self.overall_profit_label.configure(text=overall_profit_text, fg=SHORT_COLOR)
             else:
                 self.overall_profit_label.configure(text=overall_profit_text, fg="white")
-
             position_info = self.client.futures_position_information(symbol=self.crypto_fullname)[0]
             position_amount = float(position_info["positionAmt"])
             if position_amount == 0:
