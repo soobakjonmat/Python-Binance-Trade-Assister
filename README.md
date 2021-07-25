@@ -13,6 +13,8 @@ To change the default fiat currency, open the 'trade_assister.pyw' file and assi
 - s - Sell/Short
 - cl - Close Open Position
 - cc - Cancel Open Order
-- tf (1 ~ 100) - Change Trade Factor
-- cf (1 ~ 100) - Change Closing Factor
-- o (0 ~ 4) - Change Order Book Number
+
+To change:
+- Trade Factor - Enter number between (1 ~ 100)
+- Closing Factor - Enter number between (1 ~ 100)
+- Order Book Number - Enter number between (0 ~ 4)
