@@ -133,6 +133,7 @@ class Trade():
                 self.close_position()
             elif command == "cc":
                 self.cancel_order()
+            self.command_entry.delete(0, "end")
 
     def update_info(self):
         while True:
