@@ -5,7 +5,6 @@ from threading import Thread
 from credentials import API_KEY, API_SECRET
 from shared_functions import round_down, rgb2hex
 from openpyxl import load_workbook
-import re
 
 FONT_LARGE = ("IBM Plex Sans", 17, "normal")
 FONT_MID_LARGE = ("IBM Plex Sans", 14, "normal")
@@ -35,7 +34,7 @@ class Trade():
         self.crypto_name_entry = tkinter.Entry(width=10, font=FONT_MEDIUM)
         self.crypto_name_entry.grid(pady=10)
 
-        self.root.bind("<Return>", self.set_crypto_name)
+        self.crypto_name_entry.bind("<Return>", self.set_crypto_name)
 
     def set_crypto_name(self, event):
         self.crypto_name = self.crypto_name_entry.get().upper()
@@ -61,79 +60,129 @@ class Trade():
             if item["asset"] == "USDT":
                 self.asset_usdt_index = (asset_info.index(item))
 
-        self.root.bind("<Return>", self.run_command)
-
-        symbol_name_lable = tkinter.Label(text=self.crypto_fullname, bg=BG_COLOR, font=FONT_LARGE, fg="white")
-        symbol_name_lable.grid(columnspan=2)
-        self.overall_profit_label = tkinter.Label(text="Overall Profit: 0.00%", bg=BG_COLOR, font=FONT_MID_LARGE, fg="white")
-        self.overall_profit_label.grid(columnspan=2)
-        self.position_label = tkinter.Label(text="Not in Position", bg=BG_COLOR, font=FONT_LARGE, fg="white")
-        self.position_label.grid(columnspan=2)
-        self.margin_input_label = tkinter.Label(text="Margin Input: nil", bg=BG_COLOR, font=FONT_MID_LARGE, fg="white")
-        self.margin_input_label.grid(columnspan=2)
-        self.profit_label = tkinter.Label(text="Profit: nil", bg=BG_COLOR, font=FONT_MID_LARGE, fg="white")
-        self.profit_label.grid(columnspan=2)
-
-        self.trade_factor_label = tkinter.Label(text="Trade factor: " + str(self.trade_factor), bg=BG_COLOR, font=FONT_SMALL, fg="white")
-        self.trade_factor_label.grid(column=0, row=5)
-        self.trade_factor_entry = tkinter.Entry(width=4, font=FONT_SMALL)
-        self.trade_factor_entry.grid(column=1, row=5)
-        self.closing_factor_label = tkinter.Label(text="Closing factor: " + str(self.closing_factor), bg=BG_COLOR, font=FONT_SMALL, fg="white")
-        self.closing_factor_label.grid(column=0, row=6)
-        self.closing_factor_entry = tkinter.Entry(width=4, font=FONT_SMALL)
-        self.closing_factor_entry.grid(column=1, row=6)
-        self.order_book_num_label = tkinter.Label(text="Order book number: " + str(self.order_book_num), bg=BG_COLOR, font=FONT_SMALL, fg="white")
-        self.order_book_num_label.grid(column=0, row=7)
-        self.order_book_num_entry = tkinter.Entry(width=4, font=FONT_SMALL)
-        self.order_book_num_entry.grid(column=1, row=7)
-
-        self.command_label = tkinter.Label(text="Enter Command:", bg=BG_COLOR, font=FONT_MEDIUM, fg="white")
-        self.command_label.grid(columnspan=2)
-        self.command_entry = tkinter.Entry(width=10, font=FONT_MEDIUM)
-        self.command_entry.grid(pady=(5, 10), columnspan=2)
-
+        self.balance_before = 0
         wb = load_workbook('Trade Record.xlsx')
         sheet = wb["Balance Record"]
-        self.balance_before = 0
         for cell in sheet["A"]:
             if cell.value == None:
-                cell_num = int(re.findall(r"\d+", str(cell))[0])
-                cell_num_above = cell_num - 1
-                self.balance_before = float(sheet["B" + str(cell_num_above)].value)
+                cell_num = int(str(cell).split(".")[1][1:-1]) - 1
+                self.balance_before = float(sheet["B" + str(cell_num)].value)
                 break
+
+        symbol_name_lable = tkinter.Label(text=self.crypto_fullname, font=FONT_LARGE, bg=BG_COLOR, fg="white")
+        symbol_name_lable.grid(columnspan=3)
+        self.overall_profit_label = tkinter.Label(text="Overall Profit: 0.00%", font=FONT_MID_LARGE, bg=BG_COLOR, fg="white")
+        self.overall_profit_label.grid(columnspan=3)
+        self.position_label = tkinter.Label(text="Not in Position", font=FONT_LARGE, bg=BG_COLOR, fg="white")
+        self.position_label.grid(columnspan=3)
+        self.margin_input_label = tkinter.Label(text="Margin Input: nil", font=FONT_MID_LARGE, bg=BG_COLOR, fg="white")
+        self.margin_input_label.grid(columnspan=3)
+        self.profit_label = tkinter.Label(text="Profit: nil", font=FONT_MID_LARGE, bg=BG_COLOR, fg="white")
+        self.profit_label.grid(columnspan=3)
+
+        self.trade_factor_label = tkinter.Label(
+            text="Trade Factor",
+            font=FONT_SMALL,
+            bg=BG_COLOR,
+            fg="white",)
+        self.trade_factor_label.grid(column=0, row=5)
+        self.trade_factor_display = tkinter.Label(
+            text=": " + str(self.trade_factor),
+            font=FONT_SMALL,
+            bg=BG_COLOR,
+            fg="white",)
+        self.trade_factor_display.grid(column=1, row=5, sticky="w")
+        self.trade_factor_entry = tkinter.Entry(width=4, font=FONT_SMALL)
+        self.trade_factor_entry.bind("<Return>", self.update_trade_factor)
+        self.trade_factor_entry.grid(column=2, row=5)
+
+        self.closing_factor_label = tkinter.Label(
+            text="Closing Factor",
+            font=FONT_SMALL,
+            bg=BG_COLOR,
+            fg="white")
+        self.closing_factor_label.grid(column=0, row=6)
+        self.closing_factor_display = tkinter.Label(
+            text=": " + str(self.closing_factor),
+            font=FONT_SMALL,
+            bg=BG_COLOR,
+            fg="white")
+        self.closing_factor_display.grid(column=1, row=6, sticky="w")
+        self.closing_factor_entry = tkinter.Entry(width=4, font=FONT_SMALL)
+        self.closing_factor_entry.bind("<Return>", self.update_closing_factor)
+        self.closing_factor_entry.grid(column=2, row=6)
+
+        self.order_book_num_label = tkinter.Label(
+            text="Order Book Number",
+            font=FONT_SMALL,
+            bg=BG_COLOR,
+            fg="white")
+        self.order_book_num_label.grid(column=0, row=7)
+        self.order_book_num_display = tkinter.Label(
+            text=": " + str(self.order_book_num),
+            font=FONT_SMALL,
+            bg=BG_COLOR,
+            fg="white")
+        self.order_book_num_display.grid(column=1, row=7, sticky="w")
+        self.order_book_num_entry = tkinter.Entry(width=4, font=FONT_SMALL)
+        self.order_book_num_entry.bind("<Return>", self.update_order_book_num)
+        self.order_book_num_entry.grid(column=2, row=7)
+
+        self.command_label = tkinter.Label(
+            text="Enter Command:", font=FONT_MEDIUM,
+            bg=BG_COLOR,
+            fg="white")
+        self.command_label.grid(columnspan=3)
+        self.command_entry = tkinter.Entry(width=10, font=FONT_MEDIUM)
+        self.command_entry.bind("<Return>", self.run_command)
+        self.command_entry.grid(pady=(5, 10), columnspan=3)
 
         update_info_thread = Thread(target=self.update_info, daemon=True)
         update_info_thread.start()
         update_client_thread = Thread(target=self.update_client, daemon=True)
         update_client_thread.start() 
 
-    def run_command(self, event):
+    def update_trade_factor(self, event):
         trade_factor = self.trade_factor_entry.get()
         if trade_factor != "":
-            self.trade_factor = float(trade_factor) / 100
-            self.trade_factor_label.configure(text="Trade factor: " + str(self.trade_factor))
-            self.trade_factor_entry.delete(0, "end")
+            try:
+                self.trade_factor = float(trade_factor) / 100
+                self.trade_factor_display.configure(text=": " + str(self.trade_factor))
+                self.trade_factor_entry.delete(0, "end")
+            except ValueError:
+                pass
+    
+    def update_closing_factor(self, event):
         closing_factor = self.closing_factor_entry.get()
         if closing_factor != "":
-            self.closing_factor = float(closing_factor) / 100
-            self.closing_factor_label.configure(text="Closing factor: " + str(self.closing_factor))
-            self.closing_factor_entry.delete(0, "end")
+            try:
+                self.closing_factor = float(closing_factor) / 100
+                self.closing_factor_display.configure(text=": " + str(self.closing_factor))
+                self.closing_factor_entry.delete(0, "end")
+            except ValueError:
+                pass
+
+    def update_order_book_num(self, event):
         order_book_num = self.order_book_num_entry.get()
         if order_book_num != "":
-            self.order_book_num = int(order_book_num)
-            self.order_book_num_label.configure(text="Order book number: " + str(self.order_book_num))
-            self.order_book_num_entry.delete(0, "end")
+            try:
+                self.order_book_num = int(order_book_num)
+                self.order_book_num_display.configure(text=": " + str(self.order_book_num))
+                self.order_book_num_entry.delete(0, "end")
+            except ValueError:
+                pass
+
+    def run_command(self, event):
         command = self.command_entry.get()
-        if command != "":
-            if command == "b":
-                self.enter_long()
-            elif command == "s":
-                self.enter_short()
-            elif command == "cl":
-                self.close_position()
-            elif command == "cc":
-                self.cancel_order()
-            self.command_entry.delete(0, "end")
+        if command == "b":
+            self.enter_long()
+        elif command == "s":
+            self.enter_short()
+        elif command == "cl":
+            self.close_position()
+        elif command == "cc":
+            self.cancel_order()
+        self.command_entry.delete(0, "end")
 
     def update_info(self):
         while True:
@@ -162,10 +211,14 @@ class Trade():
                     self.position_label.configure(text="Short", fg=SHORT_COLOR)
                 if profit_float > 0:
                     profit_percentage = round((float(self.profit) / balance) * 100, 2)
-                    self.profit_label.configure(text=f"Profit: ${round(self.profit, 2)} ({profit_percentage}%)", fg=LONG_COLOR)
+                    self.profit_label.configure(
+                        text=f"Profit: ${round(self.profit, 2)} ({profit_percentage}%)",
+                        fg=LONG_COLOR)
                 elif profit_float < 0:
                     profit_percentage = round((float(self.profit) / balance) * 100, 2)
-                    self.profit_label.configure(text=f"Profit: -${round(abs(self.profit), 2)} ({profit_percentage}%)", fg=SHORT_COLOR)
+                    self.profit_label.configure(
+                        text=f"Profit: -${round(abs(self.profit), 2)} ({profit_percentage}%)",
+                        fg=SHORT_COLOR)
                 else:
                     self.profit_label.configure(text="Profit: $0.00", fg="white")
                 # Margin input
