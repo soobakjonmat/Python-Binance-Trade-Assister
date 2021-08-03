@@ -16,11 +16,14 @@ for cell in sheet["A"]:
         sheet["A" + row_num].number_format = "yyyy-mm-dd"
         sheet["B" + row_num] = round(float(client.futures_account()["totalWalletBalance"]), 2)
         sheet["B" + row_num].style = "Currency"
-        sheet["C" + row_num] = f"=B{row_num} - B{row_num_above} - E{row_num}"
+        sheet["C" + row_num] = f"=B{row_num} - B{row_num_above} - F{row_num}"
         sheet["C" + row_num].style = "Currency"
-        sheet["D" + row_num] = f"=(B{row_num} - E{row_num}) / B{row_num_above} - 1"
+        sheet["D" + row_num] = f"=(B{row_num} - F{row_num}) / B{row_num_above} - 1"
         sheet["D" + row_num].style = "Percent"
         sheet["D" + row_num].number_format = "0.00%"
+        sheet["E" + row_num] = f'=IF(ISBLANK(G{row_num}), D{row_num}, "")'
+        sheet["E" + row_num].style = "Percent"
+        sheet["E" + row_num].number_format = "0.00%"
         wb.save('Trade Record.xlsx')
         break
 
