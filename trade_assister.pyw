@@ -84,13 +84,13 @@ class Trade():
             text="Trade Factor",
             font=FONT_SMALL,
             bg=BG_COLOR,
-            fg="white",)
+            fg="white")
         self.trade_factor_label.grid(column=0, row=5)
         self.trade_factor_display = tkinter.Label(
             text=": " + str(self.trade_factor),
             font=FONT_SMALL,
             bg=BG_COLOR,
-            fg="white",)
+            fg="white")
         self.trade_factor_display.grid(column=1, row=5, sticky="w")
         self.trade_factor_entry = tkinter.Entry(width=4, font=FONT_SMALL)
         self.trade_factor_entry.bind("<Return>", self.update_trade_factor)
