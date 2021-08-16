@@ -5,6 +5,7 @@ from threading import Thread
 from credentials import API_KEY, API_SECRET
 from shared_functions import round_down, rgb2hex
 from openpyxl import load_workbook
+from binance import exceptions
 
 FONT_LARGE = ("IBM Plex Sans", 17, "normal")
 FONT_MID_LARGE = ("IBM Plex Sans", 14, "normal")
@@ -24,43 +25,43 @@ class Trade():
         self.order_book_num = 0
 
         self.root = tkinter.Tk()
+        self.root.title("Trade Assister")
         self.root.geometry("+1290+200")
         self.root.resizable(width=False, height=False)
         self.root.configure(bg=BG_COLOR, padx=15)
-        self.root.title("Trade Assister")
 
         self.instruction = tkinter.Label(text="Enter crypto name:", font=FONT_MEDIUM, bg=BG_COLOR, fg="white")
         self.instruction.grid(pady=10)
         self.crypto_name_entry = tkinter.Entry(width=10, font=FONT_MEDIUM)
         self.crypto_name_entry.grid(pady=10)
 
-        self.crypto_name_entry.bind("<Return>", self.set_crypto_name)
+        self.crypto_name_entry.bind("<Return>", self.initialize)
 
-    def set_crypto_name(self, event):
+    def initialize(self, event):
         self.crypto_name = self.crypto_name_entry.get().upper()
         self.crypto_fullname = self.crypto_name + DEFAULT_FIAT_CURRENCY
         self.instruction.destroy()
         self.crypto_name_entry.destroy()
-        self.initialize()
 
-    def initialize(self):
-        self.client = Client(API_KEY, API_SECRET)
+        try:
+            self.client = Client(API_KEY, API_SECRET)
+        except exceptions.BinanceAPIException:
+            tkinter.Label(text="Time sync required", font=FONT_MEDIUM, bg=BG_COLOR, fg="white").grid(pady=10)
+        
         exchange_info = self.client.futures_exchange_info()["symbols"]
         for item in exchange_info:
             if item["symbol"] == self.crypto_fullname:
                 self.quantity_decimal_place = int(item["quantityPrecision"])
                 break
-        position_info = self.client.futures_account()["positions"]
-        for item in position_info:
+        account_info = self.client.futures_account()
+        for item in account_info["positions"]:
             if item["symbol"] == self.crypto_fullname:
                 self.leverage = int(item["leverage"])
                 break
-        asset_info = self.client.futures_account()["assets"]
-        for item in asset_info:
-            if item["asset"] == "USDT":
-                self.asset_usdt_index = (asset_info.index(item))
+        for item in account_info["assets"]:
+            if item["asset"] == DEFAULT_FIAT_CURRENCY:
+                self.usdt_index = (account_info["assets"].index(item))
 
-        self.balance_before = 0
         wb = load_workbook('Trade Record.xlsx')
         sheet = wb["Balance Record"]
         for cell in sheet["A"]:
@@ -69,8 +70,8 @@ class Trade():
                 self.balance_before = float(sheet["B" + str(cell_num)].value)
                 break
 
-        symbol_name_lable = tkinter.Label(text=self.crypto_fullname, font=FONT_LARGE, bg=BG_COLOR, fg="white")
-        symbol_name_lable.grid(columnspan=3)
+        symbol_label = tkinter.Label(text=self.crypto_fullname, font=FONT_LARGE, bg=BG_COLOR, fg="white")
+        symbol_label.grid(columnspan=3)
         self.overall_profit_label = tkinter.Label(text="Overall Profit: 0.00%", font=FONT_MID_LARGE, bg=BG_COLOR, fg="white")
         self.overall_profit_label.grid(columnspan=3)
         self.position_label = tkinter.Label(text="Not in Position", font=FONT_LARGE, bg=BG_COLOR, fg="white")
@@ -87,7 +88,7 @@ class Trade():
             fg="white")
         self.trade_factor_label.grid(column=0, row=5)
         self.trade_factor_display = tkinter.Label(
-            text=": " + str(self.trade_factor),
+            text=str(self.trade_factor),
             font=FONT_SMALL,
             bg=BG_COLOR,
             fg="white")
@@ -103,7 +104,7 @@ class Trade():
             fg="white")
         self.closing_factor_label.grid(column=0, row=6)
         self.closing_factor_display = tkinter.Label(
-            text=": " + str(self.closing_factor),
+            text=str(self.closing_factor),
             font=FONT_SMALL,
             bg=BG_COLOR,
             fg="white")
@@ -119,7 +120,7 @@ class Trade():
             fg="white")
         self.order_book_num_label.grid(column=0, row=7)
         self.order_book_num_display = tkinter.Label(
-            text=": " + str(self.order_book_num),
+            text=str(self.order_book_num),
             font=FONT_SMALL,
             bg=BG_COLOR,
             fg="white")
@@ -147,7 +148,7 @@ class Trade():
         if trade_factor != "":
             try:
                 self.trade_factor = float(trade_factor) / 100
-                self.trade_factor_display.configure(text=": " + str(self.trade_factor))
+                self.trade_factor_display.configure(text=str(self.trade_factor))
                 self.trade_factor_entry.delete(0, "end")
             except ValueError:
                 pass
@@ -157,7 +158,7 @@ class Trade():
         if closing_factor != "":
             try:
                 self.closing_factor = float(closing_factor) / 100
-                self.closing_factor_display.configure(text=": " + str(self.closing_factor))
+                self.closing_factor_display.configure(text=str(self.closing_factor))
                 self.closing_factor_entry.delete(0, "end")
             except ValueError:
                 pass
@@ -167,7 +168,7 @@ class Trade():
         if order_book_num != "":
             try:
                 self.order_book_num = int(order_book_num)
-                self.order_book_num_display.configure(text=": " + str(self.order_book_num))
+                self.order_book_num_display.configure(text=str(self.order_book_num))
                 self.order_book_num_entry.delete(0, "end")
             except ValueError:
                 pass
@@ -222,7 +223,7 @@ class Trade():
                 else:
                     self.profit_label.configure(text="Profit: $0.00", fg="white")
                 # Margin input
-                available_balance = round(float(self.client.futures_account()["assets"][self.asset_usdt_index]["availableBalance"]), 2)
+                available_balance = round(float(self.client.futures_account()["assets"][self.usdt_index]["availableBalance"]), 2)
                 margin_input_ratio = 1 - available_balance / balance
                 # Preventing possible error of rgb2hex function
                 if margin_input_ratio < 0:
@@ -237,8 +238,9 @@ class Trade():
             sleep(0.5)
 
     def enter_long(self):
-        balance = float(self.client.futures_account()["assets"][self.asset_usdt_index]["walletBalance"])
-        entering_price = float(self.client.futures_order_book(symbol=self.crypto_fullname, limit=5)["bids"][self.order_book_num][0])
+        balance = float(self.client.futures_account()["assets"][self.usdt_index]["walletBalance"])
+        order_book = self.client.futures_order_book(symbol=self.crypto_fullname, limit=5)
+        entering_price = float(order_book["bids"][self.order_book_num][0])
         buy_amount = round_down((balance * self.leverage * self.trade_factor) / entering_price, self.quantity_decimal_place)
         self.client.futures_create_order(
             symbol=self.crypto_fullname,
@@ -249,8 +251,9 @@ class Trade():
             price=entering_price)
 
     def enter_short(self):
-        balance = float(self.client.futures_account()["assets"][self.asset_usdt_index]["walletBalance"])
-        entering_price = float(self.client.futures_order_book(symbol=self.crypto_fullname, limit=5)["asks"][self.order_book_num][0])
+        balance = float(self.client.futures_account()["assets"][self.usdt_index]["walletBalance"])
+        order_book = self.client.futures_order_book(symbol=self.crypto_fullname, limit=5)
+        entering_price = float(order_book["asks"][self.order_book_num][0])
         sell_amount = round_down((balance * self.leverage * self.trade_factor) / entering_price, self.quantity_decimal_place)
         self.client.futures_create_order(
             symbol=self.crypto_fullname,
