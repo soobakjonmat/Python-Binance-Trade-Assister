@@ -1,6 +1,5 @@
 from binance.client import Client
 from credentials import API_KEY, API_SECRET
-from shared_functions import test_runtime
 
 client = Client(API_KEY, API_SECRET)
 
@@ -15,5 +14,3 @@ def create_test_order():
         timeInForce="GTC",
         quantity=1,
         price=test_price)
-
-test_runtime(9, 5, create_test_order)

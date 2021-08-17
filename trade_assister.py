@@ -1,11 +1,12 @@
-from binance.client import Client
-from time import sleep
 import tkinter
-from threading import Thread
+from binance.client import Client
 from credentials import API_KEY, API_SECRET
-from shared_functions import round_down, rgb2hex
-from openpyxl import load_workbook
 from binance import exceptions
+from openpyxl import load_workbook
+from time import sleep
+from threading import Thread
+from shared_functions import round_down, rgb2hex, test_runtime
+from create_test_order import create_test_order
 
 FONT_LARGE = ("IBM Plex Sans", 17, "normal")
 FONT_MID_LARGE = ("IBM Plex Sans", 14, "normal")
@@ -16,7 +17,7 @@ BG_COLOR = "#181A20"
 LONG_COLOR = "#02C077"
 SHORT_COLOR = "#F84960"
 
-DEFAULT_FIAT_CURRENCY = "USDT"
+DEFAULT_FIAT_CURRENCY = "BUSD"
 
 class Trade():
     def __init__(self):
@@ -60,9 +61,9 @@ class Trade():
                 break
         for item in account_info["assets"]:
             if item["asset"] == DEFAULT_FIAT_CURRENCY:
-                self.usdt_index = (account_info["assets"].index(item))
+                self.fiat_index = (account_info["assets"].index(item))
 
-        wb = load_workbook('Trade Record.xlsx')
+        wb = load_workbook("/Users/Isac/Desktop/Programming_stuff/Trade Record.xlsx")
         sheet = wb["Balance Record"]
         for cell in sheet["A"]:
             if cell.value == None:
@@ -183,12 +184,16 @@ class Trade():
             self.close_position()
         elif command == "cc":
             self.cancel_order()
+        elif command == "t":
+            test_runtime(11, 6, create_test_order)
         self.command_entry.delete(0, "end")
 
     def update_info(self):
         while True:
-            balance = round(float(self.client.futures_account()["totalWalletBalance"]), 2)
-            overall_profit = round((balance / self.balance_before - 1) * 100, 2)
+            asset_info = self.client.futures_account()["assets"][self.fiat_index]
+            total_balance = round(float(asset_info["walletBalance"]), 2)
+            # Overall profit
+            overall_profit = round((total_balance / self.balance_before - 1) * 100, 2)
             overall_profit_text = "Overall Profit: " + str(overall_profit) + "%"
             if overall_profit > 0:
                 self.overall_profit_label.configure(text=overall_profit_text, fg=LONG_COLOR)
@@ -196,49 +201,49 @@ class Trade():
                 self.overall_profit_label.configure(text=overall_profit_text, fg=SHORT_COLOR)
             else:
                 self.overall_profit_label.configure(text=overall_profit_text, fg="white")
+            # Position info
             position_info = self.client.futures_position_information(symbol=self.crypto_fullname)[0]
             position_amount = float(position_info["positionAmt"])
             if position_amount == 0:
                 self.position_label.configure(text="Not in Position", fg="white")
-                self.profit_label.configure(text="Profit: nil", fg="white")
                 self.margin_input_label.configure(text="Margin Input: nil", fg="white")
+                self.profit_label.configure(text="Profit: nil", fg="white")
             else:
-                # Profit
-                self.profit = float(position_info["unRealizedProfit"])
-                profit_float = float(self.profit)
+                # Position label
                 if position_amount > 0:
                     self.position_label.configure(text="Long", fg=LONG_COLOR)
                 else:
                     self.position_label.configure(text="Short", fg=SHORT_COLOR)
-                if profit_float > 0:
-                    profit_percentage = round((float(self.profit) / balance) * 100, 2)
-                    self.profit_label.configure(
-                        text=f"Profit: ${round(self.profit, 2)} ({profit_percentage}%)",
-                        fg=LONG_COLOR)
-                elif profit_float < 0:
-                    profit_percentage = round((float(self.profit) / balance) * 100, 2)
-                    self.profit_label.configure(
-                        text=f"Profit: -${round(abs(self.profit), 2)} ({profit_percentage}%)",
-                        fg=SHORT_COLOR)
-                else:
-                    self.profit_label.configure(text="Profit: $0.00", fg="white")
-                # Margin input
-                available_balance = round(float(self.client.futures_account()["assets"][self.usdt_index]["availableBalance"]), 2)
-                margin_input_ratio = 1 - available_balance / balance
-                # Preventing possible error of rgb2hex function
-                if margin_input_ratio < 0:
-                    margin_input_ratio = 0
-                elif margin_input_ratio > 1:
+                # Margin input label
+                input_margin = float(asset_info["initialMargin"])
+                margin_input_ratio = input_margin / total_balance
+                # Preventing rounding error
+                if margin_input_ratio > 1:
                     margin_input_ratio = 1
                 margin_input_percentage = round(margin_input_ratio * 100, 2)
                 self.margin_input_label.configure(text="Margin Input: " + str(margin_input_percentage) + "%")
                 margin_GB = int(255 * (1 - margin_input_ratio))
                 margin_color = rgb2hex(255, margin_GB, margin_GB)
                 self.margin_input_label.configure(fg=margin_color) 
+                # Profit label
+                self.profit = float(position_info["unrealizedProfit"])
+                profit_float = float(self.profit)
+                if profit_float > 0:
+                    profit_percentage = round((float(self.profit) * 100 / total_balance), 2)
+                    self.profit_label.configure(
+                        text=f"Profit: ${round(self.profit, 2)} ({profit_percentage}%)",
+                        fg=LONG_COLOR)
+                elif profit_float < 0:
+                    profit_percentage = round((float(self.profit) * 100 / total_balance), 2)
+                    self.profit_label.configure(
+                        text=f"Profit: -${round(abs(self.profit), 2)} ({profit_percentage}%)",
+                        fg=SHORT_COLOR)
+                else:
+                    self.profit_label.configure(text="Profit: $0.00 (0.00%)", fg="white")
             sleep(0.5)
 
     def enter_long(self):
-        balance = float(self.client.futures_account()["assets"][self.usdt_index]["walletBalance"])
+        balance = float(self.client.futures_account()["assets"][self.fiat_index]["walletBalance"])
         order_book = self.client.futures_order_book(symbol=self.crypto_fullname, limit=5)
         entering_price = float(order_book["bids"][self.order_book_num][0])
         buy_amount = round_down((balance * self.leverage * self.trade_factor) / entering_price, self.quantity_decimal_place)
@@ -251,7 +256,7 @@ class Trade():
             price=entering_price)
 
     def enter_short(self):
-        balance = float(self.client.futures_account()["assets"][self.usdt_index]["walletBalance"])
+        balance = float(self.client.futures_account()["assets"][self.fiat_index]["walletBalance"])
         order_book = self.client.futures_order_book(symbol=self.crypto_fullname, limit=5)
         entering_price = float(order_book["asks"][self.order_book_num][0])
         sell_amount = round_down((balance * self.leverage * self.trade_factor) / entering_price, self.quantity_decimal_place)

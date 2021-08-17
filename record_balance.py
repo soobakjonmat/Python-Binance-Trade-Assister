@@ -5,8 +5,9 @@ from datetime import date
 
 client = Client(API_KEY, API_SECRET)
 current_date = date.today().isoformat()
-wb = load_workbook('Trade Record.xlsx')
+wb = load_workbook("/Users/Isac/Desktop/Programming_stuff/Trade Record.xlsx")
 sheet = wb["Balance Record"]
+
 for cell in sheet["A"]:
     if cell.value == None:
         row_num = int(str(cell).split(".")[1][1:-1])
