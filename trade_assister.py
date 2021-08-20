@@ -17,7 +17,13 @@ BG_COLOR = "#181A20"
 LONG_COLOR = "#02C077"
 SHORT_COLOR = "#F84960"
 
-DEFAULT_FIAT_CURRENCY = "BUSD"
+DEFAULT_FIAT_CURRENCY = ""
+text_file_path = "/Users/Isac/Desktop/Programming_stuff/DEFAULT_FIAT_CURRENCY.txt"
+with open(text_file_path) as file:
+    text = file.read()
+    DEFAULT_FIAT_CURRENCY = text
+
+excel_file_path = "/Users/Isac/Desktop/Programming_stuff/Trade Record.xlsx"
 
 class Trade():
     def __init__(self):
@@ -63,7 +69,7 @@ class Trade():
             if item["asset"] == DEFAULT_FIAT_CURRENCY:
                 self.fiat_index = (account_info["assets"].index(item))
 
-        wb = load_workbook("/Users/Isac/Desktop/Programming_stuff/Trade Record.xlsx")
+        wb = load_workbook(excel_file_path)
         sheet = wb["Balance Record"]
         for cell in sheet["A"]:
             if cell.value == None:
