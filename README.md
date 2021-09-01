@@ -1,7 +1,7 @@
 # Binance Futures Trade Assister
 
 ## Foreword
-I have stopped developing this project. I am currently working on the same program in Go and it's much faster (recommended): https://github.com/soobakjonmat/golang_binance_trade_assister
+I have stopped developing this project. I have developed the same program in Go and it's much faster (recommended): https://github.com/soobakjonmat/golang_binance_trade_assister
 
 This application is an assister. Not to be used alone. Use with binance.com or binance app.
 
