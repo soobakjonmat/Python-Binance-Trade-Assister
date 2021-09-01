@@ -24,15 +24,14 @@ sheet = wb["Balance Record"]
 for cell in sheet["A"]:
     if cell.value == None:
         row_num = int(str(cell).split(".")[1][1:-1])
-        row_num_above = str(row_num - 1)
         row_num = str(row_num)
         sheet["A" + row_num] = current_date
         sheet["A" + row_num].number_format = "yyyy-mm-dd"
         sheet["B" + row_num] = round(float(client.futures_account()["assets"][fiat_index]["walletBalance"]), 2)
         sheet["B" + row_num].style = "Currency"
-        sheet["C" + row_num] = f"=B{row_num} - B{row_num_above} - F{row_num}"
+        sheet["C" + row_num] = f'=IF(ISBLANK(F{row_num}), B{row_num} - B{row_num - 1} - F{row_num}, "")'
         sheet["C" + row_num].style = "Currency"
-        sheet["D" + row_num] = f"=(B{row_num} - F{row_num}) / B{row_num_above} - 1"
+        sheet["D" + row_num] = f'=IF(ISBLANK(F{row_num}), (B{row_num} - F{row_num}) / B{row_num - 1} - 1, "")'
         sheet["D" + row_num].style = "Percent"
         sheet["D" + row_num].number_format = "0.00%"
         sheet["E" + row_num] = f'=IF(ISBLANK(G{row_num}), D{row_num}, "")'
