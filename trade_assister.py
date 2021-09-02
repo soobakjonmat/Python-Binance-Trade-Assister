@@ -1,6 +1,6 @@
 import tkinter
 from binance.client import Client
-from credentials import API_KEY, API_SECRET
+from credentials import API_KEY, API_SECRET, excel_file_path, text_file_path
 from binance import exceptions
 from openpyxl import load_workbook
 from time import sleep
@@ -18,12 +18,9 @@ LONG_COLOR = "#02C077"
 SHORT_COLOR = "#F84960"
 
 DEFAULT_FIAT_CURRENCY = ""
-text_file_path = "/Users/Isac/Desktop/Programming_stuff/DEFAULT_FIAT_CURRENCY.txt"
 with open(text_file_path) as file:
     text = file.read()
     DEFAULT_FIAT_CURRENCY = text
-
-excel_file_path = "/Users/Isac/Desktop/Programming_stuff/Trade Record.xlsx"
 
 class Trade():
     def __init__(self):
