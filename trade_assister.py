@@ -1,6 +1,6 @@
 import tkinter
 from binance.client import Client
-from credentials import API_KEY, API_SECRET, excel_file_path, text_file_path
+from credentials import API_KEY, API_SECRET, excel_file_path, text_file_path, sheet_name
 from binance import exceptions
 from openpyxl import load_workbook
 from time import sleep
@@ -67,7 +67,7 @@ class Trade():
                 self.fiat_index = (account_info["assets"].index(item))
 
         wb = load_workbook(excel_file_path)
-        sheet = wb["Balance Record"]
+        sheet = wb[sheet_name]
         for cell in sheet["A"]:
             if cell.value == None:
                 cell_num = int(str(cell).split(".")[1][1:-1]) - 1
