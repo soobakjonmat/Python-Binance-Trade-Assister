@@ -1,11 +1,7 @@
 # Binance Futures Trade Assister
 
 ## Foreword
-This app is deprecated.
-
-Instead, this is recommended: https://github.com/soobakjonmat/golang_binance_trade_assister (written in Go).
-
-This application is an assister. Not to be used alone. Use with binance.com or binance app.
+This application is made for personal usage.
 
 ## Instruction
 An input field will appear when you start the app. Enter the cryptocurrency name without the name of the fiat currency (e.g. enter btc to trade BTCUSDT).
