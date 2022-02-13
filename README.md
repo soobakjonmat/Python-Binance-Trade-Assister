@@ -11,6 +11,8 @@ Please install the IBM Plex Sans font by selecting all the .ttf files in IBM_Ple
 
 Write Your API Key and API Secret on "API Info" Sheet of Record.xlsx file.
 
+Run trade_assister.py to start.
+
 ## Assumptions
 - The user's assets are contained only in Spot and Margin Accounts.
 - The user only uses one type of fiat currency
