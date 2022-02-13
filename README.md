@@ -1,19 +1,25 @@
-# Binance Futures Trade Assister
+# Binance Trading Assister
 
 ## Foreword
-This application is made for personal usage.
+This application was made to enable trading on binance using only keyboard.
 
-## Instruction
-An input field will appear when you start the app. Enter the cryptocurrency name without the name of the fiat currency (e.g. enter btc to trade BTCUSDT).
+Margin Trading is under development.
+
+## Set Up
+Please install the IBM Plex Sans font by selecting all the .ttf files in IBM_Plex_Sans folder and pasting them into 
+"C:\Windows\Fonts"
+
+Write Your API Key and API Secret on "API Info" Sheet of Record.xlsx file.
+
+## Assumptions
+- The user's assets are contained only in Spot and Margin Accounts.
+- The user only uses one type of fiat currency
 
 ### Commands
-- b - Buy/Long
-- s - Sell/Short
-- cl - Close Open Position
-- cc - Cancel Open Order
-- t - Create Test Orders (Default: 11 tests)
+- b - Buy
+- s - Sell
+- c - Change trading currency between fiat and crypto
 
-To change:
-- Trade Factor - Enter number between (1 ~ 100)
-- Closing Factor - Enter number between (1 ~ 100)
+To update:
+- Trading Amount - Enter a number
 - Order Book Number - Enter number between (0 ~ 4)
