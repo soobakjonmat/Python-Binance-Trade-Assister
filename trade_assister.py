@@ -1,5 +1,5 @@
 import tkinter
-from openpyxl import load_workbook
+import openpyxl
 import binance.spot
 import binance.futures
 from spot import Spot
@@ -20,32 +20,80 @@ class App():
         temp = tkinter.Label(text="Choose the Trading Mode:", font=FONT_LARGE, bg=BG_COLOR, fg="white")
         temp.grid(columnspan=2, pady=10)
 
-        temp = tkinter.Button(text="Spot", font=FONT_MEDIUM)
-        temp.bind("<Button-1>", self.check_API_info)
-        temp.grid(column=0, row=1, pady=10)
+        self.spot_button = tkinter.Button(text="Spot", font=FONT_MEDIUM, command=lambda: self.check_record("Spot"))
+        self.spot_button.grid(column=0, row=1, pady=10)
 
-        temp = tkinter.Button(text="Margin", font=FONT_MEDIUM, command=self.check_API_info)
-        temp.config(state="disabled") # delete this after completing margin.py
-        temp.grid(column=1, row=1, pady=10)
-
+        self.margin_button = tkinter.Button(text="Margin", font=FONT_MEDIUM, command=lambda: self.check_record("Margin"))
+        self.margin_button.config(state="disabled") # delete this after completing margin.py
+        self.margin_button.grid(column=1, row=1, pady=10)
         
-    def check_API_info(self, event: tkinter.Event):
-        self.status_label = tkinter.Label(text="Checking API Info...", font=FONT_MEDIUM, bg=BG_COLOR, fg="white")
+    def check_record(self, trading_mode):
+        self.trading_mode = trading_mode
+        self.status_label = tkinter.Label(text="Checking record file...", font=FONT_MEDIUM, bg=BG_COLOR, fg="white")
         self.status_label.grid(pady=10)
 
-        wb = load_workbook(EXCEL_FILE_NAME)
-        sheet = wb["API Info"]
-        api_key = sheet[API_KEY_CELL].value
-        api_secret = sheet[API_SECRET_CELL].value
+        try:
+            self.wb = openpyxl.load_workbook(RECORD_FILE_NAME)
+        except FileNotFoundError:
+            self.status_label.config(text="Creating record file...")
+            self.create_record_file()
+            widgets = self.root.winfo_children()
+            for widget in widgets:
+                widget.destroy()
+            tkinter.Label(text="Enter Your API Key:", font=FONT_MEDIUM, bg=BG_COLOR, fg="white").grid(pady=10)
+            self.api_key_entry = tkinter.Entry(width=8, font=FONT_SMALL)
+            self.api_key_entry.grid(pady=10)
+            tkinter.Label(text="Enter Your API Secret:", font=FONT_MEDIUM, bg=BG_COLOR, fg="white").grid(pady=10)
+            self.api_secret_entry = tkinter.Entry(width=8, font=FONT_SMALL)
+            self.api_secret_entry.grid(pady=10)
+            tkinter.Button(text="Submit",  font=FONT_MEDIUM, command=self.set_api_info)
+        else:
+            sheet = self.wb["API Info"]
+            self.api_key = sheet[API_KEY_CELL].value
+            self.api_secret = sheet[API_SECRET_CELL].value
+            self.create_client()
 
-        self.trading_mode = event.widget["text"]
+    def create_record_file(self):
+        self.self.wb = openpyxl.Workbook()
+        spot_sheet = self.wb.create_sheet(title="Spot")
+        margin_sheet = self.wb.create_sheet(title="Margin")
+
+        sheets = [spot_sheet, margin_sheet]
+
+        for sheet in sheets:
+            sheet["A1"] = SPOT_MARGIN_COL_HEADER[0]
+            sheet["B1"] = SPOT_MARGIN_COL_HEADER[1]
+            sheet["D1"] = SPOT_MARGIN_COL_HEADER[2]
+            sheet["E1"] = SPOT_MARGIN_COL_HEADER[3]
+
+            sheet.column_dimensions["A"].width = SPOT_MARGIN_WIDTHS[0]
+            sheet.column_dimensions["B"].width = SPOT_MARGIN_WIDTHS[1]
+            sheet.column_dimensions["D"].width = SPOT_MARGIN_WIDTHS[2]
+            sheet.column_dimensions["E"].width = SPOT_MARGIN_WIDTHS[3]
+
+            sheet[TOTAL_DEPOSIT_CELL].number_format = SPOT_MARGIN_FORMATS[0]
+
+        api_sheet = self.wb.create_sheet(title="API Info")
+        api_sheet.column_dimensions["A"].width = API_INFO_WIDTH
+
+        self.wb.save("Record.xlsx")
+
+    def set_api_info(self):
+        self.api_key = self.api_key_entry.get()
+        self.api_secret = self.api_secret_entry.get()
+        sheet = self.wb["API Info"]
+        sheet["A1"] = self.api_key
+        sheet["A2"] = self.api_secret
+        self.create_client()
+
+    def create_client(self):
         try:
             match self.trading_mode:
                 case "Spot":
-                    self.spot = Spot(api_key, api_secret, self.root)
+                    self.spot = Spot(self.api_key, self.api_secret, self.root)
                     self.spot.client.account()
                 case "Margin":
-                    self.margin = Margin(api_key, api_secret, self.root)
+                    self.margin = Margin(self.api_key, self.api_secret, self.root)
                     self.margin.client.account()
         except binance.error.ClientError as c_error:
             widgets = self.root.winfo_children()
@@ -55,7 +103,6 @@ class App():
             tkinter.Label(text="Quit and try again", font=FONT_MEDIUM, background=BG_COLOR).grid(pady=10)
         except binance.error.ServerError as server_error:
             self.show_server_error_message(server_error)
-
         else:
             widgets = self.root.winfo_children()
             for widget in widgets:

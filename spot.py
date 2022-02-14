@@ -27,7 +27,7 @@ class Spot():
         self.trading_amount: float = 10
         self.order_book_num: int = 0
 
-        self.wb = load_workbook(EXCEL_FILE_NAME)
+        self.wb = load_workbook(RECORD_FILE_NAME)
 
         filters = self.client.exchange_info(symbol=self.symbol)["symbols"][0]["filters"]
 
@@ -50,7 +50,6 @@ class Spot():
 
         self.update_total_fiat_deposit_record()
 
-        # update balance before
         row_num = len(list(sheet.rows))
         self.balance_before = sheet["B"+str(row_num)].value
 
@@ -261,7 +260,7 @@ class Spot():
 
         if total_deposit != 0:
             sheet[TOTAL_DEPOSIT_CELL] = round(total_deposit, 2)
-        self.wb.save(EXCEL_FILE_NAME)
+        self.wb.save(RECORD_FILE_NAME)
 
         self.total_fiat_deposit = sheet[TOTAL_DEPOSIT_CELL].value
 
@@ -271,18 +270,20 @@ class Spot():
         sheet["B2"] = self.curr_total_balance
         sheet[TOTAL_DEPOSIT_CELL] = 0
         sheet[LAST_ACCESS_DATE_CELL] = round(time() * 1000)
-        self.wb.save(EXCEL_FILE_NAME)
+        self.wb.save(RECORD_FILE_NAME)
 
     def record_balance(self, event):
         will_proceed = messagebox.askokcancel(title="Binance Trading Assister by soobakjonmat", message="Do you want to record current balance?")
         if not will_proceed:
             return
         sheet = self.wb["Spot"]
-        row_num = len(list(sheet.rows)) + 1
-        sheet["A"+str(row_num)] = datetime.today().strftime("%Y-%m-%d %H:%M:%S")
-        sheet["B"+str(row_num)] = self.curr_total_balance
+        row_num = str(len(list(sheet.rows)) + 1)
+        sheet["A"+row_num] = datetime.today().strftime("%Y-%m-%d %H:%M:%S")
+        sheet["A"+row_num].number_format = SPOT_MARGIN_FORMATS[0]
+        sheet["B"+row_num] = self.curr_total_balance
+        sheet["B"+row_num].number_format = SPOT_MARGIN_FORMATS[1]
         self.balance_before = self.curr_total_balance
-        self.wb.save(EXCEL_FILE_NAME)
+        self.wb.save(RECORD_FILE_NAME)
 
     def start_websockets(self):
         try:
