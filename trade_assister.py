@@ -30,7 +30,7 @@ class App():
     def check_record(self, trading_mode):
         self.trading_mode = trading_mode
         self.status_label = tkinter.Label(text="Checking record file...", font=FONT_MEDIUM, bg=BG_COLOR, fg="white")
-        self.status_label.grid(pady=10)
+        self.status_label.grid(pady=10, columnspan=2)
 
         try:
             self.wb = openpyxl.load_workbook(RECORD_FILE_NAME)
@@ -41,12 +41,12 @@ class App():
             for widget in widgets:
                 widget.destroy()
             tkinter.Label(text="Enter Your API Key:", font=FONT_MEDIUM, bg=BG_COLOR, fg="white").grid(pady=10)
-            self.api_key_entry = tkinter.Entry(width=8, font=FONT_SMALL)
+            self.api_key_entry = tkinter.Entry(width=36, font=FONT_SMALL)
             self.api_key_entry.grid(pady=10)
             tkinter.Label(text="Enter Your API Secret:", font=FONT_MEDIUM, bg=BG_COLOR, fg="white").grid(pady=10)
-            self.api_secret_entry = tkinter.Entry(width=8, font=FONT_SMALL)
+            self.api_secret_entry = tkinter.Entry(width=36, font=FONT_SMALL)
             self.api_secret_entry.grid(pady=10)
-            tkinter.Button(text="Submit",  font=FONT_MEDIUM, command=self.set_api_info)
+            tkinter.Button(text="Submit",  font=FONT_MEDIUM, command=self.set_api_info).grid(pady=10)
         else:
             sheet = self.wb["API Info"]
             self.api_key = sheet[API_KEY_CELL].value
@@ -54,7 +54,8 @@ class App():
             self.create_client()
 
     def create_record_file(self):
-        self.self.wb = openpyxl.Workbook()
+        self.wb = openpyxl.Workbook()
+        self.wb.remove(self.wb["Sheet"])
         spot_sheet = self.wb.create_sheet(title="Spot")
         margin_sheet = self.wb.create_sheet(title="Margin")
 
@@ -71,7 +72,8 @@ class App():
             sheet.column_dimensions["D"].width = SPOT_MARGIN_WIDTHS[2]
             sheet.column_dimensions["E"].width = SPOT_MARGIN_WIDTHS[3]
 
-            sheet[TOTAL_DEPOSIT_CELL].number_format = SPOT_MARGIN_FORMATS[0]
+            sheet[TOTAL_DEPOSIT_CELL].number_format = SPOT_MARGIN_FORMATS[1]
+            sheet[LAST_ACCESS_DATE_CELL].number_format = SPOT_MARGIN_FORMATS[2]
 
         api_sheet = self.wb.create_sheet(title="API Info")
         api_sheet.column_dimensions["A"].width = API_INFO_WIDTH
@@ -84,6 +86,7 @@ class App():
         sheet = self.wb["API Info"]
         sheet["A1"] = self.api_key
         sheet["A2"] = self.api_secret
+        self.wb.save(RECORD_FILE_NAME)
         self.create_client()
 
     def create_client(self):

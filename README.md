@@ -9,8 +9,6 @@ Margin Trading is under development.
 Please install the IBM Plex Sans font by selecting all the .ttf files in IBM_Plex_Sans folder and pasting them into 
 "C:\Windows\Fonts"
 
-Write Your API Key and API Secret on "API Info" Sheet of Record.xlsx file.
-
 Run trade_assister.py to start.
 
 ## Assumptions
