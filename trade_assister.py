@@ -126,13 +126,13 @@ class App():
         self.fiat_name_entry.grid(pady=(0, 10))
         self.fiat_name_entry.bind("<Return>", self.test_currency_name)
 
-        self.submit_button = tkinter.Button(text="Submit", font=FONT_MEDIUM, command=self.test_currency_name)
+        self.submit_button = tkinter.Button(text="Submit", font=FONT_MEDIUM, command=lambda: self.test_currency_name(None))
         self.submit_button.grid(pady=10)
 
         self.status_label = tkinter.Label(text="", font=FONT_SMALL, bg=BG_COLOR, fg="white")
         self.status_label.grid(pady=10)
 
-    def test_currency_name(self):
+    def test_currency_name(self, event):
         self.status_label.config(text="Checking Symbol Name...")
         self.root.update()
         self.submit_button.config(state="disabled")

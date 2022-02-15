@@ -1,7 +1,7 @@
 import binance.spot
 import binance.error
 import tkinter
-from tkinter import messagebox
+from tkinter import Event, messagebox
 from binance.websocket.spot.websocket_client import SpotWebsocketClient
 from constants import *
 from datetime import datetime
@@ -139,27 +139,21 @@ class Spot():
             except ValueError:
                 self.status_label.config(text="ValueError. Please enter a number.")
 
-    def run_command(self, event):
-        command = event.widget.get()
-        match command:
-            case "b":
-                self.buy()
-            case "s":
-                self.sell()
-            case "c":
-                self.change_trading_currency()
-            case _:
-                self.status_label.config(text="Please enter a valid command")
-        event.widget.delete(0, "end")
-
-    def change_trading_currency(self):
-        if self.trading_currency == self.fiat:
-            self.trading_currency = self.crypto
+    def run_command(self, event: Event):
+        command: str = event.widget.get()
+        if command == "b":
+            self.buy()
+        elif command == "s":
+            self.sell()
+        elif command == "t":
+            self.change_trading_currency()
+        elif command == "c":
+            self.cancel_order(1)
+        elif command.startswith("c"):
+            self.cancel_order(command[2:])
         else:
-            self.trading_currency = self.fiat
-        self.trading_amount_display.config(text=f"{self.trading_amount} {self.trading_currency}")
-        self.status_label.config(text="Trading currency changed")
-
+            self.status_label.config(text="Please enter a valid command")
+        event.widget.delete(0, "end")
 
     def buy(self):
         buying_price = float(self.bids_order_book[self.order_book_num][0])
@@ -204,6 +198,28 @@ class Spot():
             self.status_label.config(text=server_error.message)
         else:
             self.status_label.config(text=f"Sell order placed to sell {selling_quantity}{self.fiat} at ${selling_price}")
+
+    def change_trading_currency(self):
+        if self.trading_currency == self.fiat:
+            self.trading_currency = self.crypto
+        else:
+            self.trading_currency = self.fiat
+        self.trading_amount_display.config(text=f"{self.trading_amount} {self.trading_currency}")
+        self.status_label.config(text="Trading currency changed")
+
+    def cancel_order(self, order_num):
+        try:
+            order_num = int(order_num)
+        except ValueError:
+            self.status_label.config(text="Invalid command. Please check your command.")
+        else:
+            open_orders = self.client.get_open_orders(self.symbol)
+            order_id = open_orders[len(open_orders)-order_num]["orderId"]
+            response = self.client.cancel_order(symbol=self.symbol, orderId=order_id)
+            if response["status"] == "CANCELED":
+                self.status_label.config(text=f"Order {order_num} cancelled")
+            else:
+                self.status_label.config(text=f"Error occured while cancelling order {order_num}")
 
     def update_balance(self, msg):
         self.fiat_balance = ""

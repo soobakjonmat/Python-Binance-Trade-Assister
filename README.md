@@ -18,7 +18,8 @@ Run trade_assister.py to start.
 ### Commands
 - b - Buy
 - s - Sell
-- c - Change trading currency between fiat and crypto
+- t - Change trading currency between fiat and crypto
+- c {1 ~ number of open orders} - Cancel an order. "c 1" or "c" will cancel the most recent created order and "c {number of current open orders}" will cancel the earliest created order.
 
 To update:
 - Trading Amount - Enter a number
