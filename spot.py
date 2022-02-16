@@ -37,79 +37,54 @@ class Spot():
         self.curr_price = float(self.client.ticker_price(symbol=self.symbol)["price"])
         self.update_balance(None)
 
-        symbol_label = tkinter.Label(
-            text=self.symbol,
-            font=FONT_LARGE,
-            bg=BG_COLOR,
-            fg="white")
-        symbol_label.grid(columnspan=3)
-
         sheet = self.wb["Spot"]
         if sheet["A2"].value == None: # if the user is using this app for the first time
             self.initialize_record()
 
-        self.update_total_fiat_deposit_record()
+        self.get_currency_actions()
 
         row_num = len(list(sheet.rows))
-        self.balance_before = sheet["B"+str(row_num)].value
+        if self.fiat == "BUSD":
+            self.balance_before = float(sheet["B"+str(row_num)].value)
+        else:
+            exchange_rate = float(self.client.ticker_price(symbol=self.fiat+"BUSD")["price"])
+            self.balance_before = round(float(sheet["B"+str(row_num)].value)/exchange_rate, 2)
 
-        self.profit_label = tkinter.Label(
-            text="",
-            font=FONT_MID_LARGE,
-            bg=BG_COLOR,
-            fg="white")
-        self.profit_label.config(text="Profit: $0.00 (0.00%)", fg="white")
+        symbol_label = tkinter.Label(text=self.symbol, font=FONT_LARGE, bg=BG_COLOR, fg="white")
+        symbol_label.grid(columnspan=3)
+        
+        self.profit_label = tkinter.Label(text="Profit: $0.00 (0.00%)", font=FONT_MID_LARGE, bg=BG_COLOR, fg="white")
         self.profit_label.grid(columnspan=3)
 
-        trading_amount_row_num = 3
-        trading_amount_label = tkinter.Label(
-            text="Trade Factor",
-            font=FONT_SMALL,
-            bg=BG_COLOR,
-            fg="white")
+        self.total_balance_label = tkinter.Label(text=self.curr_total_balance, font=FONT_MID_LARGE, bg=BG_COLOR, fg="white")
+        self.total_balance_label.grid(columnspan=3)
+
+        trading_amount_row_num = 4
+        trading_amount_label = tkinter.Label(text="Trade Factor", font=FONT_SMALL, bg=BG_COLOR, fg="white")
         trading_amount_label.grid(column=0, row=trading_amount_row_num)
-        self.trading_amount_display = tkinter.Label(
-            text=f"{self.trading_amount} {self.trading_currency}",
-            font=FONT_SMALL,
-            bg=BG_COLOR,
-            fg="white")
+        self.trading_amount_display = tkinter.Label(text=f"{self.trading_amount} {self.trading_currency}", font=FONT_SMALL, bg=BG_COLOR, fg="white")
         self.trading_amount_display.grid(column=1, row=trading_amount_row_num, sticky="w")
         trading_amount_entry = tkinter.Entry(width=4, font=FONT_SMALL)
         trading_amount_entry.bind("<Return>", self.update_trading_amount)
         trading_amount_entry.grid(column=2, row=trading_amount_row_num)
 
-        order_book_row_num = 4
-        order_book_num_label = tkinter.Label(
-            text="Order Book Number",
-            font=FONT_SMALL,
-            bg=BG_COLOR,
-            fg="white")
+        order_book_row_num = 5
+        order_book_num_label = tkinter.Label(text="Order Book Number", font=FONT_SMALL, bg=BG_COLOR, fg="white")
         order_book_num_label.grid(column=0, row=order_book_row_num)
-        self.order_book_num_display = tkinter.Label(
-            text=self.order_book_num,
-            font=FONT_SMALL,
-            bg=BG_COLOR,
-            fg="white")
+        self.order_book_num_display = tkinter.Label(text=self.order_book_num, font=FONT_SMALL, bg=BG_COLOR, fg="white")
         self.order_book_num_display.grid(column=1, row=order_book_row_num, sticky="w")
         order_book_num_entry = tkinter.Entry(width=4, font=FONT_SMALL)
         order_book_num_entry.bind("<Return>", self.update_order_book_num)
         order_book_num_entry.grid(column=2, row=order_book_row_num)
 
-        self.status_label = tkinter.Label(
-            text="Start Trading by Entering a Command:", font=FONT_MEDIUM,
-            bg=BG_COLOR,
-            fg="white")
+        self.status_label = tkinter.Label(text="Start Trading by Entering a Command:", font=FONT_MEDIUM, bg=BG_COLOR, fg="white")
         self.status_label.grid(columnspan=3)
 
         command_entry = tkinter.Entry(width=10, font=FONT_MEDIUM)
         command_entry.bind("<Return>", self.run_command)
         command_entry.grid(pady=(5, 10), columnspan=3)
 
-        record_balance_button = tkinter.Button(
-            text="Record balance",
-            font=FONT_MEDIUM,
-            command=self.record_balance
-        )
+        record_balance_button = tkinter.Button(text="Record balance", font=FONT_MEDIUM, command=self.record_balance)
         record_balance_button.grid(pady=10, columnspan=3)
 
         update_info_thread = Thread(target=self.update_info, daemon=True)
@@ -252,12 +227,57 @@ class Spot():
 
         self.curr_total_balance = round(self.fiat_balance + self.crypto_balance*self.curr_price, 2)
 
-    def update_total_fiat_deposit_record(self):
+    def get_currency_actions(self):
         sheet = self.wb["Spot"]
         last_access_time = int(sheet[LAST_ACCESS_DATE_CELL].value)
         sheet[LAST_ACCESS_DATE_CELL] = round(time() * 1000)
-        
-        total_deposit = 0
+        total_logs = self.get_deposit_history(last_access_time) + self.get_transfer_history(last_access_time) + self.get_convert_history(last_access_time)
+        log_msg = ""
+        for log in total_logs:
+            log_msg += log + ". "
+        return log_msg
+
+    def get_convert_history(self, last_access_time):
+        logs = []
+        try:
+            convert_hist = self.client.convert_trade_history(startTime=last_access_time, endTime=round(time()*1000))["list"]
+        except binance.error.ClientError as client_error:
+            self.status_label.config(text=client_error.error_message)
+        except binance.error.ServerError as server_error:
+            self.status_label.config(text=server_error.message)
+        for hist in convert_hist:
+            from_asset = hist["fromAsset"]
+            to_asset = hist["toAsset"]
+            if hist["orderStatus"] == "SUCCESS" and ((self.crypto in {from_asset, to_asset}) or (self.flat in {from_asset, to_asset})):
+                from_amount = hist["fromAmount"]
+                to_amount = hist["toAmount"]
+                
+                logs.append(f"Converted {from_amount}{from_asset} to {to_amount}{to_asset}")
+        return logs
+    
+    def get_transfer_history(self, last_access_time):
+        logs = []
+        try:
+            spot_to_margin = self.client.user_universal_transfer_history(type="MAIN_MARGIN", startTime=last_access_time, endTime=round(time()*1000))["rows"]
+            margin_to_spot = self.client.user_universal_transfer_history(type="MARGIN_MAIN", startTime=last_access_time, endTime=round(time()*1000))["rows"]
+        except binance.error.ClientError as client_error:
+            self.status_label.config(text=client_error.error_message)
+        except binance.error.ServerError as server_error:
+            self.status_label.config(text=server_error.message)
+        for hist in spot_to_margin:
+            asset = hist["asset"]
+            if asset == self.fiat or asset == self.crypto:
+                amount = hist["amount"]
+                logs.append(f"{amount}{asset} transferred from spot to cross margin account")
+        for hist in margin_to_spot:
+            asset = hist["asset"]
+            if asset == self.fiat or asset == self.crypto:
+                amount = hist["amount"]
+                logs.append(f"{amount}{asset} transferred from cross margin to spot account")
+        return logs
+
+    def get_deposit_history(self, last_access_time):        
+        logs = []
         try:
             dep_hist = self.client.fiat_order_history(transactionType=0, beginTime=last_access_time, endTime=round(time()*1000))["data"]
             withdraw_hist = self.client.fiat_order_history(transactionType=1, beginTime=last_access_time, endTime=round(time()*1000))["data"]
@@ -267,23 +287,26 @@ class Spot():
             self.status_label.config(text=server_error.message)
 
         for deposit in dep_hist:
-            total_deposit += float(deposit["amount"])
-            total_deposit -= float(deposit["totalFee"])
-
+            fiat_currency = deposit["fiatCurrency"]
+            if fiat_currency == self.fiat:
+                amount = float(deposit["amount"]) - float(deposit["totalFee"])
+                logs.append(f"Deposited {amount}{fiat_currency}")
+                
         for withdraw in withdraw_hist:
-            total_deposit -= float(withdraw["amount"])
-            total_deposit -= float(withdraw["totalFee"])
-
-        if total_deposit != 0:
-            sheet[TOTAL_DEPOSIT_CELL] = round(total_deposit, 2)
-        self.wb.save(RECORD_FILE_NAME)
-
-        self.total_fiat_deposit = sheet[TOTAL_DEPOSIT_CELL].value
+            fiat_currency = withdraw["fiatCurrency"]
+            if fiat_currency == self.fiat:
+                amount = float(withdraw["amount"]) - float(withdraw["totalFee"])
+                logs.append(f"Withdrew {amount}{fiat_currency}")
+        return logs
 
     def initialize_record(self):
         sheet = self.wb["Spot"]
         sheet["A2"] = datetime.today().strftime("%Y-%m-%d %H:%M:%S")
-        sheet["B2"] = self.curr_total_balance
+        if self.fiat == "BUSD":
+            sheet["B2"] = self.curr_total_balance
+        else:
+            exchange_rate = float(self.client.ticker_price(symbol=self.fiat+"BUSD")["price"])
+            sheet["B2"] = round(self.curr_total_balance*exchange_rate, 2)
         sheet[TOTAL_DEPOSIT_CELL] = 0
         sheet[LAST_ACCESS_DATE_CELL] = round(time() * 1000)
         self.wb.save(RECORD_FILE_NAME)
@@ -294,11 +317,17 @@ class Spot():
             return
         sheet = self.wb["Spot"]
         row_num = str(len(list(sheet.rows)) + 1)
-        sheet["A"+row_num] = datetime.today().strftime("%Y-%m-%d %H:%M:%S")
         sheet["A"+row_num].number_format = SPOT_MARGIN_FORMATS[0]
-        sheet["B"+row_num] = self.curr_total_balance
+        sheet["A"+row_num] = datetime.today().strftime("%Y-%m-%d %H:%M:%S")
         sheet["B"+row_num].number_format = SPOT_MARGIN_FORMATS[1]
+        if self.fiat == "BUSD":
+            sheet["B"+row_num] = self.curr_total_balance
+        else:
+            exchange_rate = float(self.client.ticker_price(symbol=self.fiat+"BUSD")["price"])
+            sheet["B"+row_num] = round(self.curr_total_balance*exchange_rate, 2)
         self.balance_before = self.curr_total_balance
+
+        sheet["C"+row_num] = self.get_currency_actions()
         self.wb.save(RECORD_FILE_NAME)
 
     def start_websockets(self):
@@ -307,7 +336,7 @@ class Spot():
             self.ws_client.daemon = True
             self.ws_client.start()
             self.ws_client.mini_ticker(id=0, symbol=self.symbol, callback=self.update_price)
-            self.ws_client.partial_book_depth(id=1, symbol=self.symbol, level=5, speed=1000, callback=self.update_order_book)
+            self.ws_client.partial_book_depth(id=1, symbol=self.symbol, level=10, speed=1000, callback=self.update_order_book)
             self.ws_client.user_data(id=2, listen_key=self.my_listen_key, callback=self.update_balance)
         except binance.error.ClientError as client_error:
             self.status_label.config(text=client_error.error_message)
@@ -318,6 +347,7 @@ class Spot():
         if "c" in msg:
             self.curr_price = float(msg["c"])
             self.curr_total_balance = round(self.fiat_balance + self.crypto_balance*self.curr_price, 2)
+            self.total_balance_label.config(text=self.curr_total_balance)
         else:
             return
 
@@ -329,7 +359,7 @@ class Spot():
             return
 
     def update_profit(self):
-        profit = self.curr_total_balance - self.balance_before - self.total_fiat_deposit
+        profit = self.curr_total_balance - self.balance_before
         if profit > 0:
             profit_percentage = round((float(profit) * 100 / self.curr_total_balance), 2)
             self.profit_label.config(

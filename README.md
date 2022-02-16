@@ -13,7 +13,9 @@ Run trade_assister.py to start.
 
 ## Assumptions
 - The user's assets are contained only in Spot and Margin Accounts.
-- The user only uses one type of fiat currency
+
+## Information
+- The base fiat currency used in Record.xlsx is BUSD
 
 ### Commands
 - b - Buy
@@ -23,4 +25,4 @@ Run trade_assister.py to start.
 
 To update:
 - Trading Amount - Enter a number
-- Order Book Number - Enter number between (0 ~ 4)
+- Order Book Number - Enter number between (0 ~ 9)
