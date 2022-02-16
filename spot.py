@@ -56,7 +56,7 @@ class Spot():
         self.profit_label = tkinter.Label(text="Profit: $0.00 (0.00%)", font=FONT_MID_LARGE, bg=BG_COLOR, fg="white")
         self.profit_label.grid(columnspan=3)
 
-        self.total_balance_label = tkinter.Label(text=self.curr_total_balance, font=FONT_MID_LARGE, bg=BG_COLOR, fg="white")
+        self.total_balance_label = tkinter.Label(text=f"Estimated Balance: {self.curr_total_balance} {self.fiat}", font=FONT_MID_LARGE, bg=BG_COLOR, fg="white")
         self.total_balance_label.grid(columnspan=3)
 
         trading_amount_row_num = 4
@@ -150,7 +150,7 @@ class Spot():
         except binance.error.ServerError as server_error:
             self.status_label.config(text=server_error.message)
         else:
-            self.status_label.config(text=f"Buy order placed to buy {buying_quantity}{self.fiat} at ${buying_price}")
+            self.status_label.config(text=f"Buy order placed to buy {buying_quantity} {self.fiat} at ${buying_price}")
 
     def sell(self):
         selling_price = float(self.asks_order_book[self.order_book_num][0])
@@ -172,7 +172,7 @@ class Spot():
         except binance.error.ServerError as server_error:
             self.status_label.config(text=server_error.message)
         else:
-            self.status_label.config(text=f"Sell order placed to sell {selling_quantity}{self.fiat} at ${selling_price}")
+            self.status_label.config(text=f"Sell order placed to sell {selling_quantity} {self.fiat} at ${selling_price}")
 
     def change_trading_currency(self):
         if self.trading_currency == self.fiat:
@@ -252,28 +252,32 @@ class Spot():
                 from_amount = hist["fromAmount"]
                 to_amount = hist["toAmount"]
                 
-                logs.append(f"Converted {from_amount}{from_asset} to {to_amount}{to_asset}")
+                logs.append(f"Converted {from_amount} {from_asset} to {to_amount} {to_asset}")
         return logs
     
     def get_transfer_history(self, last_access_time):
         logs = []
         try:
-            spot_to_margin = self.client.user_universal_transfer_history(type="MAIN_MARGIN", startTime=last_access_time, endTime=round(time()*1000))["rows"]
-            margin_to_spot = self.client.user_universal_transfer_history(type="MARGIN_MAIN", startTime=last_access_time, endTime=round(time()*1000))["rows"]
+            spot_to_margin = self.client.user_universal_transfer_history(type="MAIN_MARGIN", startTime=last_access_time, endTime=round(time()*1000))
+            margin_to_spot = self.client.user_universal_transfer_history(type="MARGIN_MAIN", startTime=last_access_time, endTime=round(time()*1000))
         except binance.error.ClientError as client_error:
             self.status_label.config(text=client_error.error_message)
         except binance.error.ServerError as server_error:
             self.status_label.config(text=server_error.message)
-        for hist in spot_to_margin:
-            asset = hist["asset"]
-            if asset == self.fiat or asset == self.crypto:
-                amount = hist["amount"]
-                logs.append(f"{amount}{asset} transferred from spot to cross margin account")
-        for hist in margin_to_spot:
-            asset = hist["asset"]
-            if asset == self.fiat or asset == self.crypto:
-                amount = hist["amount"]
-                logs.append(f"{amount}{asset} transferred from cross margin to spot account")
+        if spot_to_margin["total"] > 0:
+            spot_to_margin = spot_to_margin["rows"]
+            for hist in spot_to_margin:
+                asset = hist["asset"]
+                if asset == self.fiat or asset == self.crypto:
+                    amount = hist["amount"]
+                    logs.append(f"{amount} {asset} transferred from spot to cross margin account")
+        if margin_to_spot["total"] > 0:
+            margin_to_spot = margin_to_spot["rows"]
+            for hist in margin_to_spot:
+                asset = hist["asset"]
+                if asset == self.fiat or asset == self.crypto:
+                    amount = hist["amount"]
+                    logs.append(f"{amount} {asset} transferred from cross margin to spot account")
         return logs
 
     def get_deposit_history(self, last_access_time):        
@@ -290,13 +294,13 @@ class Spot():
             fiat_currency = deposit["fiatCurrency"]
             if fiat_currency == self.fiat:
                 amount = float(deposit["amount"]) - float(deposit["totalFee"])
-                logs.append(f"Deposited {amount}{fiat_currency}")
+                logs.append(f"Deposited {amount} {fiat_currency}")
                 
         for withdraw in withdraw_hist:
             fiat_currency = withdraw["fiatCurrency"]
             if fiat_currency == self.fiat:
                 amount = float(withdraw["amount"]) - float(withdraw["totalFee"])
-                logs.append(f"Withdrew {amount}{fiat_currency}")
+                logs.append(f"Withdrew {amount} {fiat_currency}")
         return logs
 
     def initialize_record(self):
@@ -347,7 +351,7 @@ class Spot():
         if "c" in msg:
             self.curr_price = float(msg["c"])
             self.curr_total_balance = round(self.fiat_balance + self.crypto_balance*self.curr_price, 2)
-            self.total_balance_label.config(text=self.curr_total_balance)
+            self.total_balance_label.config(text=f"Estimated Balance: {self.curr_total_balance} {self.fiat}")
         else:
             return
 
