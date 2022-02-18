@@ -64,17 +64,14 @@ class App():
         for sheet in sheets:
             sheet["A1"] = SPOT_MARGIN_COL_HEADER[0]
             sheet["B1"] = SPOT_MARGIN_COL_HEADER[1]
-            sheet["C1"] = SPOT_MARGIN_COL_HEADER[2]
-            sheet["D1"] = SPOT_MARGIN_COL_HEADER[3]
-            sheet["E1"] = SPOT_MARGIN_COL_HEADER[4]
+            sheet["D1"] = SPOT_MARGIN_COL_HEADER[2]
+            sheet["E1"] = SPOT_MARGIN_COL_HEADER[3]
 
             sheet.column_dimensions["A"].width = SPOT_MARGIN_WIDTHS[0]
             sheet.column_dimensions["B"].width = SPOT_MARGIN_WIDTHS[1]
-            sheet.column_dimensions["C"].width = SPOT_MARGIN_WIDTHS[2]
-            sheet.column_dimensions["D"].width = SPOT_MARGIN_WIDTHS[3]
-            sheet.column_dimensions["E"].width = SPOT_MARGIN_WIDTHS[4]
+            sheet.column_dimensions["D"].width = SPOT_MARGIN_WIDTHS[2]
+            sheet.column_dimensions["E"].width = SPOT_MARGIN_WIDTHS[3]
 
-            sheet[TOTAL_DEPOSIT_CELL].number_format = SPOT_MARGIN_FORMATS[1]
             sheet[LAST_ACCESS_DATE_CELL].number_format = SPOT_MARGIN_FORMATS[2]
 
         api_sheet = self.wb.create_sheet(title="API Info")

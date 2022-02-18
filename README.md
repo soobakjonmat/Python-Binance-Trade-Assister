@@ -12,6 +12,7 @@ Please install the IBM Plex Sans font by selecting all the .ttf files in IBM_Ple
 Run trade_assister.py to start.
 
 ## Assumptions
+- The user uses only one crypto pair for trading
 - The user's assets are contained only in Spot and Margin Accounts.
 
 ## Information

@@ -44,7 +44,7 @@ class Spot():
         self.get_currency_actions()
 
         row_num = len(list(sheet.rows))
-        if self.fiat == "BUSD":
+        if self.fiat in {"BUSD", "USDT", "USDC"}:
             self.balance_before = float(sheet["B"+str(row_num)].value)
         else:
             exchange_rate = float(self.client.ticker_price(symbol=self.fiat+"BUSD")["price"])
@@ -305,13 +305,14 @@ class Spot():
 
     def initialize_record(self):
         sheet = self.wb["Spot"]
+        sheet["A2"].number_format = SPOT_MARGIN_FORMATS[0]
         sheet["A2"] = datetime.today().strftime("%Y-%m-%d %H:%M:%S")
-        if self.fiat == "BUSD":
+        sheet["B2"].number_format = SPOT_MARGIN_FORMATS[1]
+        if self.fiat in {"BUSD", "USDT", "USDC"}:
             sheet["B2"] = self.curr_total_balance
         else:
             exchange_rate = float(self.client.ticker_price(symbol=self.fiat+"BUSD")["price"])
             sheet["B2"] = round(self.curr_total_balance*exchange_rate, 2)
-        sheet[TOTAL_DEPOSIT_CELL] = 0
         sheet[LAST_ACCESS_DATE_CELL] = round(time() * 1000)
         self.wb.save(RECORD_FILE_NAME)
 
@@ -324,14 +325,14 @@ class Spot():
         sheet["A"+row_num].number_format = SPOT_MARGIN_FORMATS[0]
         sheet["A"+row_num] = datetime.today().strftime("%Y-%m-%d %H:%M:%S")
         sheet["B"+row_num].number_format = SPOT_MARGIN_FORMATS[1]
-        if self.fiat == "BUSD":
+        if self.fiat in {"BUSD", "USDT", "USDC"}:
             sheet["B"+row_num] = self.curr_total_balance
         else:
             exchange_rate = float(self.client.ticker_price(symbol=self.fiat+"BUSD")["price"])
             sheet["B"+row_num] = round(self.curr_total_balance*exchange_rate, 2)
         self.balance_before = self.curr_total_balance
 
-        sheet["C"+row_num] = self.get_currency_actions()
+        sheet["D"+row_num] = self.get_currency_actions()
         self.wb.save(RECORD_FILE_NAME)
 
     def start_websockets(self):

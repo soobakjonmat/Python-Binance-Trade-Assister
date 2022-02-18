@@ -10,10 +10,10 @@ LOSS_COLOR = "#F84960"
 RECORD_FILE_NAME = "Record.xlsx"
 API_KEY_CELL = "A1"
 API_SECRET_CELL = "A2"
-TOTAL_DEPOSIT_CELL = "D2"
+LOGS_CELL = "D2"
 LAST_ACCESS_DATE_CELL = "E2"
 
-SPOT_MARGIN_COL_HEADER = ["Date", "Balance (BUSD)", "Logs", "Total Deposit (BUSD)", "Last Access Date"]
-SPOT_MARGIN_WIDTHS = [19, 15, 17, 17, 19]
+SPOT_MARGIN_COL_HEADER = ["Date", "Balance (USD)", "Logs", "Last Access Date"]
+SPOT_MARGIN_WIDTHS = [19, 15, 19, 19]
 SPOT_MARGIN_FORMATS = ['yyyy/mm/dd\ hh:mm:ss', '_-[$$-409]* #,##0.00_ ;_-[$$-409]* \-#,##0.00\ ;_-[$$-409]* "-"??_ ;_-@_ ', '0']
 API_INFO_WIDTH = 70
