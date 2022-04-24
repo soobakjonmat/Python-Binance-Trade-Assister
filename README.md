@@ -1,12 +1,18 @@
 # Binance Trading Assister
 
+## Preview
+<img src="images/choose_trading_mode.png"/>
+<img src="images/enter_info.png"/>
+<img src="images/enter_crypto_name.png"/>
+<img src="images/main.png"/>
+
 ## Foreword
 This application was made to enable trading on binance using only keyboard.
 
-Margin Trading is under development.
+Margin Trading is not supported yet.
 
 ## Set Up
-Please install the IBM Plex Sans font by selecting all the .ttf files in IBM_Plex_Sans folder and pasting them into 
+Please install the IBM Plex Sans font by selecting all the .ttf files in IBM_Plex_Sans folder and pasting them into
 "C:\Windows\Fonts"
 
 Run trade_assister.py to start.

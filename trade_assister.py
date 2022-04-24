@@ -7,15 +7,12 @@ from margin import Margin
 import binance.error
 from constants import *
 
-api_key = ""
-api_secret = ""
-
 class App():
     def __init__(self) -> None:
         self.root = tkinter.Tk()
         self.root.title("Binance Trading Assister by soobakjonmat")
         self.root.geometry("+1150+200")
-        self.root.configure(bg=BG_COLOR, padx=15)
+        self.root.config(bg=BG_COLOR, padx=15)
 
         temp = tkinter.Label(text="Choose the Trading Mode:", font=FONT_LARGE, bg=BG_COLOR, fg="white")
         temp.grid(columnspan=2, pady=10)
