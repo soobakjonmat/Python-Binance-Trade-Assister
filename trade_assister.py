@@ -3,7 +3,7 @@ import openpyxl
 import binance.spot
 import binance.futures
 from spot import Spot
-from margin import Margin
+# from margin import Margin
 import binance.error
 from constants import *
 
@@ -91,9 +91,9 @@ class App():
                 case "Spot":
                     self.spot = Spot(self.api_key, self.api_secret, self.root)
                     self.spot.client.account()
-                case "Margin":
-                    self.margin = Margin(self.api_key, self.api_secret, self.root)
-                    self.margin.client.account()
+                # case "Margin":
+                #     self.margin = Margin(self.api_key, self.api_secret, self.root)
+                #     self.margin.client.account()
         except binance.error.ClientError as c_error:
             widgets = self.root.winfo_children()
             for widget in widgets:
