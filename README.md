@@ -1,10 +1,10 @@
 # Binance Trading Assister
 
 ## Preview
-<img src="images/choose_trading_mode.png"/>
-<img src="images/enter_info.png"/>
-<img src="images/enter_crypto_name.png"/>
-<img src="images/main.png"/>
+<img src="images/preview1.png"/>
+<img src="images/preview2.png"/>
+<img src="images/preview3.png"/>
+<img src="images/preview4.png"/>
 
 ## Foreword
 This application was made to enable trading on binance using only keyboard.
