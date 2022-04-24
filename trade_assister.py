@@ -23,7 +23,7 @@ class App():
         self.margin_button = tkinter.Button(text="Margin", font=FONT_MEDIUM, command=lambda: self.check_record("Margin"))
         self.margin_button.config(state="disabled") # delete this after completing margin.py
         self.margin_button.grid(column=1, row=1, pady=10)
-        
+
     def check_record(self, trading_mode):
         self.trading_mode = trading_mode
         self.status_label = tkinter.Label(text="Checking record file...", font=FONT_MEDIUM, bg=BG_COLOR, fg="white")
@@ -137,7 +137,7 @@ class App():
         self.symbol = self.crypto + self.fiat
         self.fiat_name_entry.delete(0, 'end')
         self.crypto_name_entry.delete(0, 'end')
-        
+
         try:
             match self.trading_mode:
                 case "Spot":

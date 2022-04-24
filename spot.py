@@ -52,7 +52,7 @@ class Spot():
 
         symbol_label = tkinter.Label(text=self.symbol, font=FONT_LARGE, bg=BG_COLOR, fg="white")
         symbol_label.grid(columnspan=3)
-        
+
         self.profit_label = tkinter.Label(text="Profit: $0.00 (0.00%)", font=FONT_MID_LARGE, bg=BG_COLOR, fg="white")
         self.profit_label.grid(columnspan=3)
 
@@ -60,7 +60,7 @@ class Spot():
         self.total_balance_label.grid(columnspan=3)
 
         trading_amount_row_num = 4
-        trading_amount_label = tkinter.Label(text="Trade Factor", font=FONT_SMALL, bg=BG_COLOR, fg="white")
+        trading_amount_label = tkinter.Label(text="Trading Amount", font=FONT_SMALL, bg=BG_COLOR, fg="white")
         trading_amount_label.grid(column=0, row=trading_amount_row_num)
         self.trading_amount_display = tkinter.Label(text=f"{self.trading_amount} {self.trading_currency}", font=FONT_SMALL, bg=BG_COLOR, fg="white")
         self.trading_amount_display.grid(column=1, row=trading_amount_row_num, sticky="w")
@@ -102,7 +102,7 @@ class Spot():
             except ValueError:
                 self.status_label.config(text="ValueError. Please enter a number.")
 
-    
+
     def update_order_book_num(self, event: tkinter.Event):
         order_book_num = event.widget.get()
         if order_book_num != "":
@@ -221,7 +221,7 @@ class Spot():
             self.status_label.config(text=client_error.error_message)
         except binance.error.ServerError as server_error:
             self.status_label.config(text=server_error.message)
-        
+
         for order in open_orders:
             self.crypto_balance += (float(order["origQty"]) - float(order["executedQty"]))
 
@@ -251,10 +251,10 @@ class Spot():
             if hist["orderStatus"] == "SUCCESS" and ((self.crypto in {from_asset, to_asset}) or (self.flat in {from_asset, to_asset})):
                 from_amount = hist["fromAmount"]
                 to_amount = hist["toAmount"]
-                
+
                 logs.append(f"Converted {from_amount} {from_asset} to {to_amount} {to_asset}")
         return logs
-    
+
     def get_transfer_history(self, last_access_time):
         logs = []
         try:
@@ -280,7 +280,7 @@ class Spot():
                     logs.append(f"{amount} {asset} transferred from cross margin to spot account")
         return logs
 
-    def get_deposit_history(self, last_access_time):        
+    def get_deposit_history(self, last_access_time):
         logs = []
         try:
             dep_hist = self.client.fiat_order_history(transactionType=0, beginTime=last_access_time, endTime=round(time()*1000))["data"]
@@ -295,7 +295,7 @@ class Spot():
             if fiat_currency == self.fiat:
                 amount = float(deposit["amount"]) - float(deposit["totalFee"])
                 logs.append(f"Deposited {amount} {fiat_currency}")
-                
+
         for withdraw in withdraw_hist:
             fiat_currency = withdraw["fiatCurrency"]
             if fiat_currency == self.fiat:
@@ -377,7 +377,7 @@ class Spot():
                 fg=LOSS_COLOR)
         else:
             self.profit_label.config(text="Profit: $0.00 (0.00%)", fg="white")
-    
+
     def update_info(self):
         while 1:
             self.update_profit()
